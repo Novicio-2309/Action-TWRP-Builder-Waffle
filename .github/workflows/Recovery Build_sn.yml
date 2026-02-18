@@ -1,87 +1,62 @@
-name: Recovery Build(Snowwolf725)
+name: TWRP Recovery Build (Xiaomi Amethyst)
 
 on:
   workflow_dispatch:
     inputs:
       MANIFEST_URL:
-        description: 'MANIFEST_URL (if want to use SSH keys, use git@github.com:XXXXX)'
+        description: 'MANIFEST_URL'
         required: true
-        default: 'https://github.com/PitchBlackRecoveryProject/manifest_pb'
+        default: 'https://github.com/minimal-twrp/android_manifest_twrp_aosp'
       MANIFEST_BRANCH:
         description: 'MANIFEST_BRANCH'
         required: true
-        default: 'android-12.1'
+        default: 'twrp-12.1'
       DEVICE_TREE_URL:
         description: 'DEVICE_TREE_URL'
         required: true
-        default: 'https://github.com/snowwolf725/device_oneplus_waffle-TWRP'
+        default: 'https://github.com/Novicio-2309/android_device_xiaomi_amethyst'
       DEVICE_TREE_BRANCH:
         description: 'DEVICE_TREE_BRANCH'
         required: true
-        default: 'android-12.1'
+        default: 'main'
       DEVICE_PATH:
         description: 'DEVICE_PATH'
         required: true
-        default: 'device/oneplus/waffle'
+        default: 'device/xiaomi/amethyst'
       DEVICE_NAME:
         description: 'DEVICE_NAME'
         required: true
-        default: 'waffle'
+        default: 'amethyst'
       MAKEFILE_NAME:
         description: 'MAKEFILE_NAME'
         required: true
-        default: 'twrp_waffle'
+        default: 'twrp_amethyst'
       BUILD_TARGET:
         description: 'BUILD_TARGET'
         required: true
         default: 'recovery'
-#      PATCH_INSTALLET:
-#        description: 'Patch recovery installer'
-#        required: true
-#        type: choice
-#        default: 'true'
-#        options:
-#          - 'true'
-#          - 'false'
 
-#      BACKUP_METADATA:
-#        description: 'allow backup metadata'
-#        required: true
-#        type: choice
-#        default: 'true'
-#        options:
-#          - 'true'
-#          - 'false'
 jobs:
   build:
     if: github.event.repository.owner.id == github.event.sender.id
     runs-on: ubuntu-24.04
     env:
-      TIMESTAMP: 20250725
+      TIMESTAMP: 20260218
     permissions:
       contents: write
     steps:
     - name: Display Run Parameters
       run: |
         echo "::group::User Environment Variables"
-        echo "Manifest URL: ${{ github.event.inputs.MANIFEST_URL }}"
-        echo "Manifest Branch: ${{ github.event.inputs.MANIFEST_BRANCH }}"
-        echo "Device Tree URL: ${{ github.event.inputs.DEVICE_TREE_URL }}"
-        echo "Device Tree Branch: ${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
-        echo "Device Path: ${{ github.event.inputs.DEVICE_PATH }}"
         echo "Device Name: ${{ github.event.inputs.DEVICE_NAME }}"
         echo "Makefile Name: ${{ github.event.inputs.MAKEFILE_NAME }}"
-        echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
 
-    # You might want to Checkout your repo first, but not mandatory
     - name: Check Out
       uses: actions/checkout@v4
 
-    # Cleanup The Actions Workspace Using Custom Composite Run Actions
     - name: Cleanup
       uses: rokibhasansagar/slimhub_actions@main
-      # That's it! Now use your normal steps
 
     - name: Prepare the environment
       run: |
@@ -100,15 +75,6 @@ jobs:
         distribution: 'zulu'
         java-version: '11'
 
-    - name: Setup SSH Keys
-      if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') || 
-          startsWith(github.event.inputs.DEVICE_TREE_URL, 'git@github.com') ||
-          startsWith(github.event.inputs.COMMON_TREE_URL, 'git@github.com') }}
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-          ssh-private-key: |
-            ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: Install repo
       run: |
         mkdir ~/bin
@@ -121,7 +87,7 @@ jobs:
         mkdir workspace
         cd workspace
         echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
-        git config --global user.name "Nico170420"
+        git config --global user.name "Novicio-2309"
         git config --global user.email "b170420nc@gmail.com"
         repo init --depth=1 -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
       id: pwd
@@ -136,14 +102,6 @@ jobs:
         repo sync -j$(nproc --all) --force-sync
       working-directory: workspace
 
-    - name: Check Build Tree
-      uses: haya14busa/action-cond@v1
-      id: buildtree
-      with:
-        cond: ${{ github.event.inputs.MANIFEST_BRANCH == 'twrp-11' || github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
-        if_true: twrp
-        if_false: omni
-
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
       with:
@@ -156,24 +114,21 @@ jobs:
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng
         make clean
         make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-        TIMESTAMP=$(date +"%Y%m%d")
-        echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
-        cp out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img ./PBRP-AMETHYST-$TIMESTAMP.img
+        # Inilalabas ang file para mahanap ng upload action
+        cp out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img ../TWRP-AMETHYST-TEST.img
       working-directory: workspace
 
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
-        files: | 
-          *.img
-#          # workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img
-#          # workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.zip
-#          # workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*vendor*.img
-        name: PBRP-${{ env.TIMESTAMP }}-Testing
-        tag_name: ${{ env.TIMESTAMP }}-Testimg
+        files: TWRP-AMETHYST-TEST.img
+        name: TWRP-Xiaomi-Amethyst-Test
+        tag_name: ${{ github.run_id }}
         body: |
-          Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
-          Device: OnePlus 12 (Waffle)
-          Target: Android 14/Android 15/Android 16
+          **Custom TWRP Recovery Build**
+          * **Device**: Redmi Note 14 Pro+ 5G (amethyst)
+          * **Manifest**: ${{ github.event.inputs.MANIFEST_BRANCH }}
+          * **Maintainer**: NovicioProject+
+          * **Status**: Decryption Support Added
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
