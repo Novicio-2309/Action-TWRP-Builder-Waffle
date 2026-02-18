@@ -150,10 +150,7 @@ jobs:
         swap-size-gb: 12
 
     - name: Building recovery
-      run: | 
-        cd bootable/recovery/gui/theme/common/languages/
-        rm zh_TW.xml
-        cp ${GITHUB_WORKSPACE}/patch/zh_TW.xml .
+      run: |         
         cd ../../../../
         git apply --whitespace=nowarn ${GITHUB_WORKSPACE}/patch/001-ota-install-mod.patch
         git apply --whitespace=nowarn ${GITHUB_WORKSPACE}/patch/002-add-metatdata-to-backup-list.patch
