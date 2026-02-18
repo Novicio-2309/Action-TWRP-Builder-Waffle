@@ -6,11 +6,11 @@ on:
       MANIFEST_URL:
         description: 'MANIFEST_URL'
         required: true
-        default: 'https://github.com/minimal-twrp/android_manifest_twrp_aosp'
+        default: 'https://github.com/PitchBlackRecoveryProject/manifest_pb'
       MANIFEST_BRANCH:
         description: 'MANIFEST_BRANCH'
         required: true
-        default: 'twrp-12.1'
+        default: 'android-12.1'
       DEVICE_TREE_URL:
         description: 'DEVICE_TREE_URL'
         required: true
@@ -114,7 +114,7 @@ jobs:
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng
         make clean
         make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-        # Inilalabas ang file para mahanap ng upload action
+        # Nilabas ang image sa root para mahanap ng upload
         cp out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img ../TWRP-AMETHYST-TEST.img
       working-directory: workspace
 
@@ -129,6 +129,5 @@ jobs:
           * **Device**: Redmi Note 14 Pro+ 5G (amethyst)
           * **Manifest**: ${{ github.event.inputs.MANIFEST_BRANCH }}
           * **Maintainer**: NovicioProject+
-          * **Status**: Decryption Support Added
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
