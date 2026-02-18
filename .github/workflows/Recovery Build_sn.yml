@@ -49,12 +49,7 @@ jobs:
       run: |
         echo "::group::User Environment Variables"
         echo "Manifest URL: ${{ github.event.inputs.MANIFEST_URL }}"
-        echo "Manifest Branch: ${{ github.event.inputs.MANIFEST_BRANCH }}"
-        echo "Device Tree URL: ${{ github.event.inputs.DEVICE_TREE_URL }}"
-        echo "Device Tree Branch: ${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
-        echo "Device Path: ${{ github.event.inputs.DEVICE_PATH }}"
         echo "Device Name: ${{ github.event.inputs.DEVICE_NAME }}"
-        echo "Makefile Name: ${{ github.event.inputs.MAKEFILE_NAME }}"
         echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
 
@@ -120,15 +115,17 @@ jobs:
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng
         make clean
         make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-        # Heto ang fix: Nilalabas ang file sa root folder para mahanap ng upload action
-        cp out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img ../TWRP-AMETHYST-20260218.img
+        TIMESTAMP=$(date +"%Y%m%d")
+        echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+        # FIX: Nilabas ang file sa root directory para mahanap ng upload step
+        cp out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img ../TWRP-AMETHYST-$TIMESTAMP.img
       working-directory: workspace
 
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          TWRP-AMETHYST-20260218.img
+          TWRP-AMETHYST-*.img
         name: TWRP-Xiaomi-Amethyst-Test
         tag_name: ${{ github.run_id }}
         body: |
